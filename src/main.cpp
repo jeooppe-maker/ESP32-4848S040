@@ -72,6 +72,7 @@ Arduino_ESP32RGBPanel *bus = new Arduino_ESP32RGBPanel(
 #include <lv_init.h>
 #include <Ticker.h> 
 #include "ui/GUI.h"
+#include "display.h"
 Ticker tick;
 // #include <lv_api_map.h>
 
@@ -176,6 +177,21 @@ void my_touchpad_read(lv_indev_t * indev, lv_indev_data_t * data)
 {
     static int16_t last_x = 0;
     static int16_t last_y = 0;
+    // ---- WAKE LOGIC ----
+    // Serial.println("my_touchpad_read");
+    if(screen_off)
+    {
+        // Serial.print("my_touchpad_read");
+        if(touch_touched())
+        {
+            Serial.printf("Pressed X: %d, Y: %d\n", last_x, last_y);
+            display_power_on();
+        }
+
+        data->state = LV_INDEV_STATE_REL;
+        return; // ❗ не передаємо touch в LVGL
+    }
+
 
     if(touch_has_signal())
     {
@@ -185,6 +201,7 @@ void my_touchpad_read(lv_indev_t * indev, lv_indev_data_t * data)
 
             last_x = touch_last_x;
             last_y = touch_last_y;
+            Serial.printf("Pressed X: %d, Y: %d\n", last_x, last_y);
         }
         else
         {
@@ -208,7 +225,7 @@ void my_tick()
 
 void setup()
 {
-    Serial.begin(115200);
+    Serial.begin(9600);
     Serial.println("LVGL Widgets Demo");
 
     /* Init touch */

@@ -68,21 +68,21 @@ void GUI_initScreens()
 
 void GUI_loadFirstScreen()
 {
-    lv_screen_load(GUI_Screen__screen);
+    lv_screen_load(GUI_Screen__HomeScreen);
 }
 
 
 void GUI_initScreenContents()
 {
-    GUI_initScreen__screen();
+    GUI_initScreen__HomeScreen();
 }
 
 
 void GUI_initScreenTexts()
 {
-    GUI_initScreenTexts__screen();
+    GUI_initScreenTexts__HomeScreen();
 }
 void GUI_initScreenStyles()
 {
-    GUI_initScreenStyles__screen();
+    GUI_initScreenStyles__HomeScreen();
 }

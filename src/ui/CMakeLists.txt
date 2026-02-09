@@ -1,11 +1,15 @@
 SET( SOURCES
     Behaviour/GUI_Animations.c
     Behaviour/GUI_Events.c
-    Content/screens/screen.c
+    Content/screens/HomeScreen.c
     GUI.c
     GUI_Variables.c
+    assets/images/upload_gear_d9b2b60ef26e4053b8b2ab3e9c0a6e18_png.c
+    assets/images/upload_home_85a42dbbab8f4a38850a3f547649d832_png.c
+    assets/images/upload_vector_1_10_5120x5440_6973fb11ca1245b987576c6caa3c73f5_png.c
+    assets/images/upload_vector_1_12_5759x4480_939fb82a1d184c40bcc9579c7b31c3fa_png.c
     assets/styles/GUI_GlobalStyles.c
-    fonts/montserrantbold32_1.c
+    fonts/montserratbold18_1.c
     ui_helpers.c
 )
 
