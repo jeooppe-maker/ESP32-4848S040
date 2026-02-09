@@ -70,6 +70,9 @@ Arduino_ESP32RGBPanel *bus = new Arduino_ESP32RGBPanel(
 #include "touch.h"
 #include <core/lv_obj.h>
 #include <lv_init.h>
+#include <Ticker.h> 
+#include "ui/GUI.h"
+Ticker tick;
 // #include <lv_api_map.h>
 
 /* Change to your screen resolution */
@@ -197,7 +200,11 @@ void my_touchpad_read(lv_indev_t * indev, lv_indev_data_t * data)
     data->point.y = last_y;
 }
 
-
+// Таймер, який викликає lv_tick_inc() 
+void my_tick() 
+{ 
+    lv_tick_inc(1); // повідомляємо LVGL, що пройшла 1 мс 
+}
 
 void setup()
 {
@@ -257,7 +264,8 @@ void setup()
     lv_indev_t * indev_touch = lv_indev_create();
     lv_indev_set_type(indev_touch, LV_INDEV_TYPE_POINTER);
     lv_indev_set_read_cb(indev_touch, my_touchpad_read);
-
+    GUI_init();
+    tick.attach_ms(1, my_tick); // викликати кожну мс
     Serial.println("Setup done");
 }
 

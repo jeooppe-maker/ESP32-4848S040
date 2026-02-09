@@ -1,0 +1,13 @@
+SET( SOURCES
+    Behaviour/GUI_Animations.c
+    Behaviour/GUI_Events.c
+    Content/screens/screen.c
+    GUI.c
+    GUI_Variables.c
+    assets/styles/GUI_GlobalStyles.c
+    fonts/montserrantbold32_1.c
+    ui_helpers.c
+)
+
+add_library( GUI ${SOURCES} )
+
