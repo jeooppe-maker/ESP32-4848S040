@@ -71,6 +71,10 @@ Arduino_ESP32RGBPanel *bus = new Arduino_ESP32RGBPanel(
 #include <hal/lv_hal_disp.h>
 #include <core/lv_obj.h>
 #include <lv_api_map.h>
+#include "ui/ui.h"
+
+#include "driver/temp_sensor.h"
+#include <stdio.h>
 
 /* Change to your screen resolution */
 static uint32_t screenWidth;
@@ -115,6 +119,25 @@ void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
   {
     data->state = LV_INDEV_STATE_REL;
   }
+}
+
+float read_temperature(){
+  float tsens_out;
+  temp_sensor_read_celsius(&tsens_out);
+  return tsens_out;
+}
+void update_current_temperature_label(float temp) 
+{ 
+  char buf[32]; // Формат: два знаки після коми, додати °C 
+  snprintf(buf, sizeof(buf), "%.2f °C", temp); 
+  lv_label_set_text(ui_CurrentTemperatureValueLabel, buf); // Необов'язково, але корисно щоб LVGL перемалював об'єкт негайно 
+  lv_obj_invalidate(ui_CurrentTemperatureValueLabel); 
+}
+
+static void temp_timer_cb(lv_timer_t * timer) { 
+  // Припустимо, є функція read_temperature() яка повертає float 
+  float currentTemp = read_temperature(); 
+  update_current_temperature_label(currentTemp); 
 }
 
 void setup()
@@ -171,9 +194,19 @@ void setup()
     indev_drv.read_cb = my_touchpad_read;
     lv_indev_drv_register(&indev_drv);
 
+
+
+    temp_sensor_config_t temp_sensor = TSENS_CONFIG_DEFAULT();
+    temp_sensor_get_config(&temp_sensor);
+    temp_sensor_start();
+
     // lv_demo_widgets();
+    ui_init();
+
+    lv_timer_create(temp_timer_cb, 1000, NULL); // оновлювати кожну секунду
 
     Serial.println("Setup done");
+    
   }
 }
 

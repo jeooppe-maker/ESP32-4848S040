@@ -1,0 +1,11 @@
+screens/ui_Screen1.c
+screens/ui_Screen2.c
+screens/ui_Screen3.c
+ui.c
+components/ui_comp_hook.c
+ui_helpers.c
+ui_events.cpp
+images/ui_img_gear_png.c
+images/ui_img_mode_heat_64dp_1f1f1f_fill0_wght400_grad0_opsz48_png.c
+images/ui_img_firewatch_480x480_png.c
+fonts/ui_font_gear.c
