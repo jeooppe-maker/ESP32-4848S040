@@ -68,114 +68,199 @@ Arduino_ESP32RGBPanel *bus = new Arduino_ESP32RGBPanel(
  * Please config the touch panel in touch.h
  ******************************************************************************/
 #include "touch.h"
-#include <hal/lv_hal_disp.h>
 #include <core/lv_obj.h>
-#include <lv_api_map.h>
+#include <lv_init.h>
+// #include <lv_api_map.h>
 
 /* Change to your screen resolution */
 static uint32_t screenWidth;
 static uint32_t screenHeight;
-static lv_disp_draw_buf_t draw_buf;
+// static lv_disp_draw_buf_t draw_buf;
 static lv_color_t *disp_draw_buf;
-static lv_disp_drv_t disp_drv;
+// static lv_disp_drv_t disp_drv;
 
 /* Display flushing */
-void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
+// void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p)
+// {
+//   uint32_t w = (area->x2 - area->x1 + 1);
+//   uint32_t h = (area->y2 - area->y1 + 1);
+
+// #if (LV_COLOR_16_SWAP != 0)
+//   gfx->draw16bitBeRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
+// #else
+//   gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
+// #endif
+
+//   lv_disp_flush_ready(disp);
+// }
+
+void my_disp_flush(lv_display_t *disp,
+                   const lv_area_t *area,
+                   uint8_t *px_map)
 {
-  uint32_t w = (area->x2 - area->x1 + 1);
-  uint32_t h = (area->y2 - area->y1 + 1);
+    uint32_t w = area->x2 - area->x1 + 1;
+    uint32_t h = area->y2 - area->y1 + 1;
 
 #if (LV_COLOR_16_SWAP != 0)
-  gfx->draw16bitBeRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
+    gfx->draw16bitBeRGBBitmap(
+        area->x1,
+        area->y1,
+        (uint16_t *)px_map,
+        w,
+        h
+    );
 #else
-  gfx->draw16bitRGBBitmap(area->x1, area->y1, (uint16_t *)&color_p->full, w, h);
+    gfx->draw16bitRGBBitmap(
+        area->x1,
+        area->y1,
+        (uint16_t *)px_map,
+        w,
+        h
+    );
 #endif
 
-  lv_disp_flush_ready(disp);
+    lv_display_flush_ready(disp);
 }
 
-void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
+// ================================OLD==============================
+// void my_touchpad_read(lv_indev_drv_t *indev_driver, lv_indev_data_t *data)
+// {
+//   if (touch_has_signal())
+//   {
+//     if (touch_touched())
+//     {
+//       data->state = LV_INDEV_STATE_PR;
+
+//       /*Set the coordinates*/
+//       data->point.x = touch_last_x;
+//       data->point.y = touch_last_y;
+//     }
+//     else if (touch_released())
+//     {
+//       data->state = LV_INDEV_STATE_REL;
+//     }
+//   }
+//   else
+//   {
+//     data->state = LV_INDEV_STATE_REL;
+//   }
+// }
+// =================================================================
+// void my_touchpad_read(lv_indev_t * indev, lv_indev_data_t * data)
+// {
+//     if(touch_has_signal())
+//     {
+//         if(touch_touched())
+//         {
+//             data->state = LV_INDEV_STATE_PRESSED;
+
+//             /* Set the coordinates */
+//             data->point.x = touch_last_x;
+//             data->point.y = touch_last_y;
+//         }
+//         else if(touch_released())
+//         {
+//             data->state = LV_INDEV_STATE_RELEASED;
+//         }
+//     }
+//     else
+//     {
+//         data->state = LV_INDEV_STATE_RELEASED;
+//     }
+// }
+
+void my_touchpad_read(lv_indev_t * indev, lv_indev_data_t * data)
 {
-  if (touch_has_signal())
-  {
-    if (touch_touched())
-    {
-      data->state = LV_INDEV_STATE_PR;
+    static int16_t last_x = 0;
+    static int16_t last_y = 0;
 
-      /*Set the coordinates*/
-      data->point.x = touch_last_x;
-      data->point.y = touch_last_y;
-    }
-    else if (touch_released())
+    if(touch_has_signal())
     {
-      data->state = LV_INDEV_STATE_REL;
+        if(touch_touched())
+        {
+            data->state = LV_INDEV_STATE_PRESSED;
+
+            last_x = touch_last_x;
+            last_y = touch_last_y;
+        }
+        else
+        {
+            data->state = LV_INDEV_STATE_RELEASED;
+        }
     }
-  }
-  else
-  {
-    data->state = LV_INDEV_STATE_REL;
-  }
+    else
+    {
+        data->state = LV_INDEV_STATE_RELEASED;
+    }
+
+    data->point.x = last_x;
+    data->point.y = last_y;
 }
+
+
 
 void setup()
 {
-  Serial.begin(115200);
-  // while (!Serial);
-  Serial.println("LVGL Widgets Demo");
+    Serial.begin(115200);
+    Serial.println("LVGL Widgets Demo");
 
-  // Init touch device
-  touch_init();
+    /* Init touch */
+    touch_init();
 
-  // Init Display
-  //gfx->begin();
-  
-  gfx->begin(16000000); /* specify data bus speed */
-
-  gfx->fillScreen(BLACK);
+    /* Init display HW */
+    gfx->begin(16000000);
+    gfx->fillScreen(BLACK);
 
 #ifdef GFX_BL
-  pinMode(GFX_BL, OUTPUT);
-  digitalWrite(GFX_BL, HIGH);
+    pinMode(GFX_BL, OUTPUT);
+    digitalWrite(GFX_BL, HIGH);
 #endif
 
-  lv_init();
+    /* Init LVGL */
+    lv_init();
 
-  screenWidth = gfx->width();
-  screenHeight = gfx->height();
+    screenWidth  = gfx->width();
+    screenHeight = gfx->height();
+
+    /* Allocate draw buffer */
 #ifdef ESP32
-  disp_draw_buf = (lv_color_t *)heap_caps_malloc(sizeof(lv_color_t) * screenWidth * 200, MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT);
+    uint16_t * buf1 = (uint16_t *)heap_caps_malloc(
+        screenWidth * 200 * sizeof(uint16_t),
+        MALLOC_CAP_INTERNAL | MALLOC_CAP_8BIT
+    );
 #else
-  disp_draw_buf = (lv_color_t *)malloc(sizeof(lv_color_t) * screenWidth * 200);
+    uint16_t * buf1 = (uint16_t *)malloc(
+        screenWidth * 200 * sizeof(uint16_t)
+    );
 #endif
-  if (!disp_draw_buf)
-  {
-    Serial.println("LVGL disp_draw_buf allocate failed!");
-  }
-  else
-  {
-    lv_disp_draw_buf_init(&draw_buf, disp_draw_buf, NULL, screenWidth * 200);
 
-    /* Initialize the display */
-    lv_disp_drv_init(&disp_drv);
-    /* Change the following line to your display resolution */
-    disp_drv.hor_res = screenWidth;
-    disp_drv.ver_res = screenHeight;
-    disp_drv.flush_cb = my_disp_flush;
-    disp_drv.draw_buf = &draw_buf;
-    lv_disp_drv_register(&disp_drv);
+    if(!buf1) {
+        Serial.println("LVGL buffer alloc failed!");
+        return;
+    }
 
-    /* Initialize the (dummy) input device driver */
-    static lv_indev_drv_t indev_drv;
-    lv_indev_drv_init(&indev_drv);
-    indev_drv.type = LV_INDEV_TYPE_POINTER;
-    indev_drv.read_cb = my_touchpad_read;
-    lv_indev_drv_register(&indev_drv);
+    /* Create display */
+    lv_display_t * disp = lv_display_create(screenWidth, screenHeight);
 
-    // lv_demo_widgets();
+    lv_display_set_color_format(disp, LV_COLOR_FORMAT_RGB565);
+    lv_display_set_flush_cb(disp, my_disp_flush);
+
+    lv_display_set_buffers(
+        disp,
+        buf1,
+        NULL,
+        screenWidth * 200 * sizeof(uint16_t),
+        LV_DISPLAY_RENDER_MODE_PARTIAL
+    );
+
+    /* Register touch input */
+    lv_indev_t * indev_touch = lv_indev_create();
+    lv_indev_set_type(indev_touch, LV_INDEV_TYPE_POINTER);
+    lv_indev_set_read_cb(indev_touch, my_touchpad_read);
 
     Serial.println("Setup done");
-  }
 }
+
 
 void loop()
 {
